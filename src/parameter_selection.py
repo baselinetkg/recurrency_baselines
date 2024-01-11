@@ -13,7 +13,6 @@ import argparse
 import numpy as np
 from joblib import Parallel, delayed
 import pathlib
-import pickle
 import os
 from copy import copy
 
@@ -232,11 +231,11 @@ if append_alpha:
 else:
     if window < 0:
 
-        filename = dataset_name+ str(0)+'configs_multistep.json'
+        filename = dataset_name+ str(0.0)+'configs_multistep.json'
         with open('./configs/'+filename, 'w') as fp:
             json.dump(best_config, fp)       
     else:
-        filename = dataset_name+ str(0)+'configs.json'
+        filename = dataset_name+ str(0.0)+'configs.json'
         with open('./configs/'+filename, 'w') as fp:
             json.dump(best_config, fp)
 

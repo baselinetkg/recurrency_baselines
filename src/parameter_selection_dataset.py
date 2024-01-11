@@ -222,11 +222,11 @@ if append_alpha:
         json.dump(best_config, fp)
 else:
     if window < 0:
-        filename = dataset_name+ str(0)+'configs_per_dataset_multistep.json'
+        filename = dataset_name+ str(0.0)+'configs_per_dataset_multistep.json'
         with open('./configs/'+filename, 'w') as fp:
             json.dump(best_config, fp)       
     else:
-        filename = dataset_name+ str(0)+'configs_per_dataset.json'
+        filename = dataset_name+ str(0.0)+'configs_per_dataset.json'
         with open('./configs/'+filename, 'w') as fp:
             json.dump(best_config, fp)
 

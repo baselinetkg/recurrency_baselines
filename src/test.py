@@ -82,17 +82,17 @@ basis_dict = {int(k): v for k, v in basis_dict.items()}
 if lmbda_in == float(-2) or alpha_in == float(-2):
     dir_path =  os.path.join(pathlib.Path().resolve(), 'configs', dataset_name+'configs_per_dataset.json')  
     if window < 0: 
-        filename = dataset_name+ str(0)+'configs_per_dataset_multistep.json'
+        filename = dataset_name+ str(0.0)+'configs_per_dataset_multistep.json'
         
     else:
-        filename = dataset_name+ str(0)+'configs_per_dataset.json'
+        filename = dataset_name+ str(0.0)+'configs_per_dataset.json'
     dir_path =  os.path.join(pathlib.Path().resolve(), 'configs', filename)  
     best_config = json.load(open(dir_path)) 
 if lmbda_in == float(-1) or alpha_in == float(-1):
     if window < 0: 
-        filename = dataset_name+ str(0)+'configs_multistep.json'        
+        filename = dataset_name+ str(0.0)+'configs_multistep.json'        
     else:
-        filename = dataset_name+ str(0)+'configs.json'
+        filename = dataset_name+ str(0.0)+'configs.json'
     dir_path =  os.path.join(pathlib.Path().resolve(), 'configs', filename)   
     best_config = json.load(open(dir_path)) 
 
@@ -172,9 +172,11 @@ print("Running testing with best configs finished in {} seconds.".format(total_t
 # saving scores to pkl
 print("Now saving the candidates and scores to files. ")
 print('save pkl')
-logname = method_name + '_' + dataset[0] + '_' + str(0) + '_' +'singlestep' + '_' + str(window) + '_' + str(lmbda_in) + '_' +str(alpha_in)
+logname = method_name + '_' + dataset[0] + '_' + str(0.0) + '_' +'singlestep' + '_' + str(window) + '_' + str(lmbda_in) + '_' +str(alpha_in)
 dirname = os.path.join(pathlib.Path().resolve(), 'results', method_name )
 eval_paper_authorsfilename = os.path.join(dirname, logname + ".pkl")
+if not os.path.exists(dirname):
+    os.makedirs(dirname)
 with open(eval_paper_authorsfilename,'wb') as file:
     pickle.dump(final_logging_dict, file, protocol=4) 
 file.close()
@@ -200,12 +202,14 @@ for rel in rels:
 
 co = list(oc_dict.values())
 if lmbda_in == float(-1):
+    
     plt.figure()
     plt.grid()
     sca = plt.scatter(rels, lmbdas_used, c=co, s=4)
     plt.title('lambda used per relation id')
     plt.colorbar(sca)
-    
+    if not os.path.exists('./results/figs'):
+        os.makedirs('./results/figs')
     plt.savefig('./results/figs/lmbdas_used'+dataset_name+'.pdf')
 if alpha_in == float(-1):
     plt.figure()
@@ -213,7 +217,8 @@ if alpha_in == float(-1):
     sca =  plt.scatter(rels, alphas_used, c=co, s=4)
     plt.title('alpha used per relation id')
     plt.colorbar(sca)
-    
+    if not os.path.exists('./results/figs'):
+        os.makedirs('./results/figs')
     plt.savefig('./results/figs/alphas_used'+dataset_name+'.pdf')
 print("logname", logname)
 

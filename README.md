@@ -14,17 +14,19 @@ Install all packages from requirements.txt
 * test.py: to apply the baselines on the test set and compute final mrr and results file; results file is stored in ./results/dataset_name
 * src/evaluation/run_evaluation.py
 
-
 ## How to run
 
-TODO: specify the args for each file
+* see run.sh for examples how to run and reproduce our experiments.
+* comment or uncomment the desired lines
 
 ## How to evaluate
 
-TODO: describe
+* see /src/evaluation for instructions
 
 ## How to cite
 
-Paper
+Paper "History repeats itself: A Baseline for Temporal Knowledge Graph Forecasting" - Anonymous Authors.
+
+We will update information as soon as allowed.
 
 ## 
