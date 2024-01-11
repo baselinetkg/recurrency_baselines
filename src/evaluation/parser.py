@@ -53,7 +53,7 @@ if __name__ == '__main__':
         'baselinepsi': 'baselinepsi',
     }
     inv_dict = {value: key for key, value in method_names.items()}  # used in helper function
-    assert len(method_names.keys()) == len(jsonfile.keys()), 'Reports for all methods not present in jsonfile!'
+    # assert len(method_names.keys()) == len(jsonfile.keys()), 'Reports for all methods not present in jsonfile!'
 
     # Initialise variables relating to the dataframe
     column_names = [f'{dataset}_{metric}' for dataset in datasets for metric in metrics]
@@ -62,6 +62,8 @@ if __name__ == '__main__':
     time_df = pd.DataFrame(columns=column_names)
 
     for method_name in method_names.keys():
+        if not 'results/'+ method_name in list(jsonfile.keys()):
+            continue
         sub_dict = jsonfile['results/'+ method_name]
 
         # Iterate on each sub-dict (.pkl report values)
@@ -109,4 +111,4 @@ if __name__ == '__main__':
     raw_df.to_excel(writer, sheet_name='raw')
     static_df.to_excel(writer, sheet_name='static')
     time_df.to_excel(writer, sheet_name='time')
-    writer.save()
+    writer.close() #save()
