@@ -1,42 +1,3 @@
-"""*
- *     Reccurency Baselines 
- *
- *        File: test.py
- *
- *     Authors: Deleted for purposes of anonymity 
- *
- *     Proprietor: Deleted for purposes of anonymity --- PROPRIETARY INFORMATION
- * 
- * The software and its source code contain valuable trade secrets and shall be maintained in
- * confidence and treated as confidential information. The software may only be used for 
- * evaluation and/or testing purposes, unless otherwise explicitly stated in the terms of a
- * license agreement or nondisclosure agreement with the proprietor of the software. 
- * Any unauthorized publication, transfer to third parties, or duplication of the object or
- * source code---either totally or in part---is strictly prohibited.
- *
- *     Copyright (c) 2021 Proprietor: Deleted for purposes of anonymity
- *     All Rights Reserved.
- *
- * THE PROPRIETOR DISCLAIMS ALL WARRANTIES, EITHER EXPRESS OR 
- * IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE AND THE WARRANTY AGAINST LATENT 
- * DEFECTS, WITH RESPECT TO THE PROGRAM AND ANY ACCOMPANYING DOCUMENTATION. 
- * 
- * NO LIABILITY FOR CONSEQUENTIAL DAMAGES:
- * IN NO EVENT SHALL THE PROPRIETOR OR ANY OF ITS SUBSIDIARIES BE 
- * LIABLE FOR ANY DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES
- * FOR LOSS OF BUSINESS PROFITS, BUSINESS INTERRUPTION, LOSS OF INFORMATION, OR
- * OTHER PECUNIARY LOSS AND INDIRECT, CONSEQUENTIAL, INCIDENTAL,
- * ECONOMIC OR PUNITIVE DAMAGES) ARISING OUT OF THE USE OF OR INABILITY
- * TO USE THIS PROGRAM, EVEN IF the proprietor HAS BEEN ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGES.
- * 
- * For purposes of anonymity, the identity of the proprietor is not given herewith. 
- * The identity of the proprietor will be given once the review of the 
- * conference submission is completed. 
- *
- * THIS HEADER MAY NOT BE EXTRACTED OR MODIFIED IN ANY WAY.
- *"""
 '''
 Testing
 Apply the simple baselines on specified dataset (test set), compute test mrr, 
@@ -56,20 +17,21 @@ import os
 from copy import copy
 from matplotlib import pyplot as plt
 from collections import Counter
+import ray
 
 import utils.utils as utils
 from data import data_handler
-from utils.apply_baselines import apply_baselines
+from utils.apply_baselines import apply_baselines, apply_baselines_remote
 from utils.baselinepsi import score_psi
 
 start_o = time.time()
 
 ## args
 parser = argparse.ArgumentParser()
-parser.add_argument("--dataset", "-d", default="ICEWS18", type=str) #ICEWS14, ICEWS18, GDELT, YAGO, WIKI
+parser.add_argument("--dataset", "-d", default="YAGO", type=str) #ICEWS14, ICEWS18, GDELT, YAGO, WIKI
 parser.add_argument("--rules", "-r", default="1_r.json", type=str) #name is usually the same
 parser.add_argument("--window", "-w", default=0, type=int) # set to e.g. 200 if only the most recent 200 timesteps should be considered. set to -2 if multistep
-parser.add_argument("--num_processes", "-p", default=12, type=int)
+parser.add_argument("--num_processes", "-p", default=1, type=int)
 parser.add_argument("--includebaselinexi", "-b",  default='y', type=str) #'y' if yes, 'n' if no
 parser.add_argument("--includebaselinepsi", "-psi",  default='y', type=str) #'y' if yes, 'n' if no
 parser.add_argument("--lmbda", "-l",  default=-1, type=float) # if learned_per_rel: -1; if learned_per_dataset: -2 # either for a fixed lmbda or learned lmbdas
@@ -81,6 +43,7 @@ dataset_name = parsed["dataset"]
 rules_file = parsed["rules"]
 window = parsed["window"]
 num_processes = parsed["num_processes"]
+ray.init(num_cpus=num_processes, num_gpus=0)
 lmbda_in = parsed["lmbda"]
 alpha_in = parsed["alpha"]
 
@@ -141,6 +104,7 @@ scores_dict_for_test = {}
 lmbdas_used = []
 alphas_used = []
 
+
 ## loop through relations and apply baselines
 for rel in rels:
     start = time.time()
@@ -181,13 +145,14 @@ for rel in rels:
             num_processes_tmp = num_processes      
         
         ## apply baselines for this relation
-        output = Parallel(n_jobs=num_processes_tmp)(
-            delayed(apply_baselines)(i, num_queries, test_data_c_rel, all_data_c_rel, window, 
+        object_references = [
+            apply_baselines_remote.remote(i, num_queries, test_data_c_rel, all_data_c_rel, window, 
                                 basis_dict, score_func_psi, 
                                 num_nodes, 2*num_rels, 
                                 baselinexi_flag, baselinepsi_flag,
-                                lmbda_psi, alpha) for i in range(num_processes_tmp))
-        
+                                lmbda_psi, alpha) for i in range(num_processes_tmp)]
+        output = ray.get(object_references)
+
         ## updates the scores and logging dict for each process
         for proc_loop in range(num_processes_tmp):
             scores_dict_for_test.update(output[proc_loop][1])
@@ -214,8 +179,6 @@ print('save pkl')
 logname = method_name + '_' + dataset[0] + '_' + str(0.0) + '_' +'singlestep' + '_' + str(window) + '_' + str(lmbda_in) + '_' +str(alpha_in)
 dirname = os.path.join(pathlib.Path().resolve(), 'results', method_name )
 eval_paper_authorsfilename = os.path.join(dirname, logname + ".pkl")
-if not os.path.exists(dirname):
-    os.makedirs(dirname)
 with open(eval_paper_authorsfilename,'wb') as file:
     pickle.dump(final_logging_dict, file, protocol=4) 
 file.close()
@@ -241,14 +204,12 @@ for rel in rels:
 
 co = list(oc_dict.values())
 if lmbda_in == float(-1):
-    
     plt.figure()
     plt.grid()
     sca = plt.scatter(rels, lmbdas_used, c=co, s=4)
     plt.title('lambda used per relation id')
     plt.colorbar(sca)
-    if not os.path.exists('./results/figs'):
-        os.makedirs('./results/figs')
+    
     plt.savefig('./results/figs/lmbdas_used'+dataset_name+'.pdf')
 if alpha_in == float(-1):
     plt.figure()
@@ -256,8 +217,7 @@ if alpha_in == float(-1):
     sca =  plt.scatter(rels, alphas_used, c=co, s=4)
     plt.title('alpha used per relation id')
     plt.colorbar(sca)
-    if not os.path.exists('./results/figs'):
-        os.makedirs('./results/figs')
+    
     plt.savefig('./results/figs/alphas_used'+dataset_name+'.pdf')
 print("logname", logname)
 
@@ -268,3 +228,6 @@ with open('testing_time.txt', 'a') as f:
     f.write(logname+':\t')
     f.write(str(total_time_o))
     f.write('\n')
+
+
+ray.shutdown()

@@ -1,42 +1,3 @@
-"""*
- *     Reccurency Baselines 
- *
- *        File: parameter_selection_dataset.py
- *
- *     Authors: Deleted for purposes of anonymity 
- *
- *     Proprietor: Deleted for purposes of anonymity --- PROPRIETARY INFORMATION
- * 
- * The software and its source code contain valuable trade secrets and shall be maintained in
- * confidence and treated as confidential information. The software may only be used for 
- * evaluation and/or testing purposes, unless otherwise explicitly stated in the terms of a
- * license agreement or nondisclosure agreement with the proprietor of the software. 
- * Any unauthorized publication, transfer to third parties, or duplication of the object or
- * source code---either totally or in part---is strictly prohibited.
- *
- *     Copyright (c) 2021 Proprietor: Deleted for purposes of anonymity
- *     All Rights Reserved.
- *
- * THE PROPRIETOR DISCLAIMS ALL WARRANTIES, EITHER EXPRESS OR 
- * IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE AND THE WARRANTY AGAINST LATENT 
- * DEFECTS, WITH RESPECT TO THE PROGRAM AND ANY ACCOMPANYING DOCUMENTATION. 
- * 
- * NO LIABILITY FOR CONSEQUENTIAL DAMAGES:
- * IN NO EVENT SHALL THE PROPRIETOR OR ANY OF ITS SUBSIDIARIES BE 
- * LIABLE FOR ANY DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES
- * FOR LOSS OF BUSINESS PROFITS, BUSINESS INTERRUPTION, LOSS OF INFORMATION, OR
- * OTHER PECUNIARY LOSS AND INDIRECT, CONSEQUENTIAL, INCIDENTAL,
- * ECONOMIC OR PUNITIVE DAMAGES) ARISING OUT OF THE USE OF OR INABILITY
- * TO USE THIS PROGRAM, EVEN IF the proprietor HAS BEEN ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGES.
- * 
- * For purposes of anonymity, the identity of the proprietor is not given herewith. 
- * The identity of the proprietor will be given once the review of the 
- * conference submission is completed. 
- *
- * THIS HEADER MAY NOT BE EXTRACTED OR MODIFIED IN ANY WAY.
- *"""
 '''
 Parameter Selection Per dataset; optional
 For given dataset, find the values of parameters lambda and alpha that give the best validation mrr 
@@ -52,14 +13,15 @@ import argparse
 import numpy as np
 from joblib import Parallel, delayed
 import pathlib
-import pickle
 import os
 from copy import copy
 
 import utils.utils as utils
 from data import data_handler
-from utils.apply_baselines import apply_baselines
+from utils.apply_baselines import apply_baselines, apply_baselines_remote
 from utils.baselinepsi import score_psi
+
+import ray
 
 start_o = time.time()
 
@@ -81,6 +43,7 @@ dataset_name = parsed["dataset"]
 rules_file = parsed["rules"]
 window = parsed["window"]
 num_processes = parsed["num_processes"]
+ray.init(num_cpus=num_processes, num_gpus=0)
 includexi = parsed["includebaselinexi"]
 includepsi = parsed["includebaselinepsi"]
 learn_lmbdapsi = parsed['learnlmbdapsi']
@@ -183,12 +146,15 @@ if learn_lmbdapsi:
     best_config['not_trained'] = 'False'       
     for lmbda_psi in lmbdas_psi:
         ## apply baselines for this relation and this lmbda
-        output = Parallel(n_jobs=num_processes_tmp)(
-            delayed(apply_baselines)(i, num_queries, valid_data, train_valid_data, window, 
+
+        object_references = [
+                apply_baselines_remote.remote(i, num_queries, valid_data, train_valid_data, window, 
                                 basis_dict, score_func_psi, 
                                 num_nodes, 2*num_rels, 
                                 baselinexi_flag, baselinepsi_flag,
-                                lmbda_psi, alpha) for i in range(num_processes_tmp))
+                                lmbda_psi, alpha) for i in range(num_processes_tmp)]
+        output = ray.get(object_references)
+
         scores_dict_for_eval = {}
         for proc_loop in range(num_processes_tmp):
             scores_dict_for_eval.update(output[proc_loop][1])
@@ -224,12 +190,14 @@ if learn_alpha == True or append_alpha ==True:
     alpha_mrrs = []
     for alpha in alphas:
         ## apply baselines for this relation and this 
-        output_alpha = Parallel(n_jobs=num_processes_tmp)(
-            delayed(apply_baselines)(i, num_queries, valid_data, train_valid_data, window, 
+        object_references = [
+                apply_baselines_remote.remote(i, num_queries, valid_data, train_valid_data, window, 
                                 basis_dict, score_func_psi, 
                                 num_nodes, 2*num_rels, 
                                 baselinexi_flag, baselinepsi_flag,
-                                lmbda_psi, alpha) for i in range(num_processes_tmp))
+                                lmbda_psi, alpha) for i in range(num_processes_tmp)]
+        output_alpha = ray.get(object_references)
+
         scores_dict_for_eval_alpha = {}
         for proc_loop in range(num_processes_tmp):
             scores_dict_for_eval_alpha.update(output_alpha[proc_loop][1])
@@ -277,6 +245,8 @@ with open('learning_time.txt', 'a') as f:
     f.write(str(total_time_o))
     f.write('\n')
 
+
+ray.shutdown()
 
 
 
