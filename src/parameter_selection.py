@@ -185,7 +185,7 @@ for rel in rels: # loop through relations. for each relation, apply rules with s
                 if mrr > best_mrr_psi:
                     best_mrr_psi = mrr
                     best_lmbda_psi = lmbda_psi
-                print('lmbda_psi: ', lmbda_psi)
+                # print('lmbda_psi: ', lmbda_psi)
                 lmbda_mrrs.append(mrr)
             best_config[str(rel_key)]['lmbda_psi'] = copy([best_lmbda_psi, best_mrr_psi])
             best_config[str(rel_key)]['other_lmbda_mrrs'] = copy(lmbda_mrrs)
@@ -228,7 +228,7 @@ for rel in rels: # loop through relations. for each relation, apply rules with s
                 if mrr_alpha > best_mrr_alpha:
                     best_mrr_alpha = mrr_alpha
                     best_alpha = alpha
-                print('alpha: ', alpha)
+                # print('alpha: ', alpha)
                 alpha_mrrs.append(mrr_alpha)
 
             best_config[str(rel_key)]['alpha'] = copy([best_alpha, best_mrr_alpha])

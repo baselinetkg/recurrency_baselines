@@ -1,42 +1,3 @@
-"""*
- *     Reccurency Baselines 
- *
- *        File: test_utils.py
- *
- *     Authors: Deleted for purposes of anonymity 
- *
- *     Proprietor: Deleted for purposes of anonymity --- PROPRIETARY INFORMATION
- * 
- * The software and its source code contain valuable trade secrets and shall be maintained in
- * confidence and treated as confidential information. The software may only be used for 
- * evaluation and/or testing purposes, unless otherwise explicitly stated in the terms of a
- * license agreement or nondisclosure agreement with the proprietor of the software. 
- * Any unauthorized publication, transfer to third parties, or duplication of the object or
- * source code---either totally or in part---is strictly prohibited.
- *
- *     Copyright (c) 2021 Proprietor: Deleted for purposes of anonymity
- *     All Rights Reserved.
- *
- * THE PROPRIETOR DISCLAIMS ALL WARRANTIES, EITHER EXPRESS OR 
- * IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY 
- * AND FITNESS FOR A PARTICULAR PURPOSE AND THE WARRANTY AGAINST LATENT 
- * DEFECTS, WITH RESPECT TO THE PROGRAM AND ANY ACCOMPANYING DOCUMENTATION. 
- * 
- * NO LIABILITY FOR CONSEQUENTIAL DAMAGES:
- * IN NO EVENT SHALL THE PROPRIETOR OR ANY OF ITS SUBSIDIARIES BE 
- * LIABLE FOR ANY DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES
- * FOR LOSS OF BUSINESS PROFITS, BUSINESS INTERRUPTION, LOSS OF INFORMATION, OR
- * OTHER PECUNIARY LOSS AND INDIRECT, CONSEQUENTIAL, INCIDENTAL,
- * ECONOMIC OR PUNITIVE DAMAGES) ARISING OUT OF THE USE OF OR INABILITY
- * TO USE THIS PROGRAM, EVEN IF the proprietor HAS BEEN ADVISED OF
- * THE POSSIBILITY OF SUCH DAMAGES.
- * 
- * For purposes of anonymity, the identity of the proprietor is not given herewith. 
- * The identity of the proprietor will be given once the review of the 
- * conference submission is completed. 
- *
- * THIS HEADER MAY NOT BE EXTRACTED OR MODIFIED IN ANY WAY.
- *"""
 """/*
  *    Utils for Testing for TKG Forecasting
  *
@@ -204,7 +165,7 @@ def stat_ranks(rank_list, method, mode, mrr_snapshot_list):
     total_rank = torch.cat(rank_list)
     mr = torch.mean(total_rank.float())
     mrr = torch.mean(1.0 / total_rank.float())
-    print("MR ({}): {:.6f}".format(method, mr.item()))
+    # print("MR ({}): {:.6f}".format(method, mr.item()))
     print("MRR ({}): {:.6f}".format(method, mrr.item()))
 
     if mode == 'test':
@@ -214,7 +175,7 @@ def stat_ranks(rank_list, method, mode, mrr_snapshot_list):
     hit_scores = []
     for hit in hits:
         avg_count = torch.mean((total_rank <= hit).float())
-        print("Hits ({}) @ {}: {:.6f}".format(method, hit, avg_count.item()))
+        # print("Hits ({}) @ {}: {:.6f}".format(method, hit, avg_count.item()))
         if mode == 'test':
             logging.debug("Hits ({}) @ {}: {:.6f}".format(method, hit, avg_count.item()))
             hit_scores.append(avg_count.item())
