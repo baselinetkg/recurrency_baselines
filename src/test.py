@@ -179,6 +179,8 @@ print('save pkl')
 logname = method_name + '_' + dataset[0] + '_' + str(0.0) + '_' +'singlestep' + '_' + str(window) + '_' + str(lmbda_in) + '_' +str(alpha_in)
 dirname = os.path.join(pathlib.Path().resolve(), 'results', method_name )
 eval_paper_authorsfilename = os.path.join(dirname, logname + ".pkl")
+if not os.path.exists(dirname):
+    os.makedirs(dirname)
 with open(eval_paper_authorsfilename,'wb') as file:
     pickle.dump(final_logging_dict, file, protocol=4) 
 file.close()
@@ -202,6 +204,8 @@ for rel in rels:
     count_occurrences = np.sum(all_rels[:] == rel)
     oc_dict[rel] = count_occurrences
 
+if not os.path.exists('./results/figs/'):
+    os.makedirs('./results/figs/')
 co = list(oc_dict.values())
 if lmbda_in == float(-1):
     plt.figure()
@@ -209,6 +213,7 @@ if lmbda_in == float(-1):
     sca = plt.scatter(rels, lmbdas_used, c=co, s=4)
     plt.title('lambda used per relation id')
     plt.colorbar(sca)
+    
     
     plt.savefig('./results/figs/lmbdas_used'+dataset_name+'.pdf')
 if alpha_in == float(-1):
